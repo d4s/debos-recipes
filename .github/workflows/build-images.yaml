@@ -1,0 +1,32 @@
+name: Build images
+on: [push, pull_request]
+
+env:
+  TMP: '/scratch'
+
+jobs:
+  build_images:
+    name: Build images
+    runs-on: ubuntu-latest
+    container:
+      image: docker://godebos/debos:latest
+      options: >-
+        --security-opt label=disable
+        --cap-add=SYS_PTRACE
+        --tmpfs /scratch:exec
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create output directory
+        run: mkdir out
+
+      - name: Build rpi64 image
+        run: cd out && debos ../rpi64/debimage-rpi64.yaml < /dev/null
+
+      - name: Publish rpi64 artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: rpi64
+          path: out/
+          if-no-files-found: error
